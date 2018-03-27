@@ -76,18 +76,10 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        maxQ = None
-        if state in self.Q:
-            for action in self.Q[state]:
-                if maxQ is None:
-                    maxQ = self.Q[state][action]
-                elif maxQ < self.Q[state][action]:
-                    maxQ = self.Q[state][action]
-        else:
-            self.createQ(state)
-            maxQ = 0.0
-
-        return maxQ 
+        max_Q_pair = max(self.Q[state].items(), key=lambda x:x[1])
+        maxQ = max_Q_pair[1]
+        action = max_Q_pair[0]
+        return maxQ, action
 
 
     def createQ(self, state):
@@ -137,14 +129,7 @@ class LearningAgent(Agent):
     def _choose_action_max(self, state):
         maxQ = None
         choose_action = None
-        for action in self.valid_actions:
-            if maxQ is None:
-                maxQ = self.Q[state][action]
-                choose_action = action
-            elif maxQ < self.Q[state][action]:
-                maxQ = self.Q[state][action]
-                choose_action = action
-
+        maxQ, choose_action = self.get_maxQ(state)
         return choose_action
 
     def _choose_action_random(self):
@@ -221,7 +206,7 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=10, tolerance=0.02)
+    sim.run(n_test=10, tolerance=0.01)
 
 
 if __name__ == '__main__':
