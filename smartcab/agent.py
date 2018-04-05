@@ -17,6 +17,7 @@ class LearningAgent(Agent):
         self.learning = learning # Whether the agent is expected to learn
         self.Q = dict()          # Create a Q-table which will be a dictionary of tuples
         self.epsilon = epsilon   # Random exploration factor
+        self.epsion_base = epsilon
         self.alpha = alpha       # Learning factor
 
         ###########
@@ -44,7 +45,7 @@ class LearningAgent(Agent):
             self.epsilon = 0
             self.alpha = 0
         else:
-            self.epsilon *= 0.99
+            self.epsilon *= self.epsion_base
 
         return None
 
@@ -76,9 +77,16 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        max_Q_pair = max(self.Q[state].items(), key=lambda x:x[1])
-        maxQ = max_Q_pair[1]
-        action = max_Q_pair[0]
+        maxQ = None
+        actions = []
+        for action in self.Q[state]:
+            if maxQ is None or maxQ < self.Q[state][action]:
+                maxQ = self.Q[state][action]
+                actions = [action]
+            elif maxQ == self.Q[state][action]:
+                actions.append(action)
+
+        action = actions.pop(random.randrange(len(actions)))
         return maxQ, action
 
 
@@ -184,7 +192,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning=True, epsilon=1, alpha=0.5)
+    agent = env.create_agent(LearningAgent, learning=True, epsilon=0.999, alpha=0.6)
     
     ##############
     # Follow the driving agent
