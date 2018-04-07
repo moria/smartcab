@@ -12119,8 +12119,7 @@ input['light']与学习安全性的相关性最高，deadline与学习效率相�
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong> 回答 for <a href="https://review.udacity.com/#!/reviews/1120141">review1120141</a>：</strong></p>
-<p>1.从直觉来看，代理程序的各个特征与安全性和效率的关系大致如下：</p>
+<h2 id="&#12304;&#22238;&#31572;&#12305;-for-review1120141&#65306;">&#12304;&#22238;&#31572;&#12305; for <a href="https://review.udacity.com/#!/reviews/1120141">review1120141</a>&#65306;<a class="anchor-link" href="#&#12304;&#22238;&#31572;&#12305;-for-review1120141&#65306;">&#182;</a></h2><p>1.从直觉来看，代理程序的各个特征与安全性和效率的关系大致如下：</p>
 <ul>
 <li>代理程序的light／left／right／oncoming特征与安全的相关性较高</li>
 <li>代理程序的waypoint／deadline特征与效率的相关性较高</li>
@@ -12131,6 +12130,20 @@ input['light']与学习安全性的相关性最高，deadline与学习效率相�
 <li>由于代理程序训练过程中起点和终点在不停改变，deadline的数值大小对于学习来说参考意义不大（由于路径的长短每次可能都不一致，如果路径长短每次都一致的话，deadline可能有较好的参考意义），且同时waypoint也能够替代deadline来表征效率。</li>
 </ul>
 <p><strong>@审阅老师</strong>，这里我有一个问题，如果我们训练的是固定长度的代理程序（比如某段高速公路的自动代理驾驶），那么deadline是否可以作为一个有效的特征来学习呢？如果按照我上面的思路，应该是可以的。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#12304;&#22238;&#31572;&#12305;-for-review1137611:">&#12304;&#22238;&#31572;&#12305; for <a href="https://review.udacity.com/#!/reviews/1137611">review1137611</a>:<a class="anchor-link" href="#&#12304;&#22238;&#31572;&#12305;-for-review1137611:">&#182;</a></h2><p>如您上次审阅提示的，如果使用deadline这个连续型的数值特征来：</p>
+<ul>
+<li>会增加极大状态空间，不利于训练</li>
+<li>由于每次训练起点终点在不断变换，deadline值的分布也不同，会影响学习效果</li>
+<li>有更好的替代方法，如agent使用的reward计算方法。</li>
+</ul>
 
 </div>
 </div>
@@ -12206,6 +12219,32 @@ input['light']与学习安全性的相关性最高，deadline与学习效率相�
 如果在那个时候，不随机选择 action，而用类似 “总是挑列表的第一个最大的" 这样的方法会造成什么问题？</p>
 </blockquote>
 <p>代码已经修改为随机选择一个最大的action。之所以如此做，是由于如果总是选择最大的第一个，会导致其他action训练不足。如您所提示的，在Qtable为空的时候，全部的action值都为0，那么开始的阶段，基本上只有最大的第一个action进入训练，其他的action得到的训练机会时不足的，也会导致最终整个Qtable的0值较多。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="&#12304;&#22238;&#31572;&#12305;-for-review1137611:">&#12304;&#22238;&#31572;&#12305; for <a href="https://review.udacity.com/#!/reviews/1137611">review1137611</a>:<a class="anchor-link" href="#&#12304;&#22238;&#31572;&#12305;-for-review1137611:">&#182;</a></h2><p>waypoint这个特征按照agent代理程序的意义，合理的状态应该只有3个（代码里None只在agent到达目的地后才会出现，这时候训练结束了，这个状态和训练是无关的），因此如您在上次审阅中所说的</p>
+<blockquote><p>从严谨的角度上说，有 384 个 state，那么究竟多少次，才能保证多少百分率的 state 被训练充分呢？可以从这几个方面出发：
+考虑一个简单的独立事件模型，如果每一次行为都是纯随机（与上次行动无关），那么多少次能遍历多少百分比的状态？
+考虑一个简单的马尔科夫模型，如果每一次行为都是只与上次行动有关，那么多少次能遍历多少百分比的状态？
+一个状态要被遍历多少次才能算充分训练了？
+多少个状态被充分训练了才能保证小车的驾驶符合要求？</p>
+</blockquote>
+<p>在代理程序里，每次训练的每个step只会选择一个action进行，同时更新一个Q值。对于384个状态，每个状态都有4个可以被更新的Q值（LRFN），因此整个Qtable共有384*4=1536个可以被更新的Q值，按照以下两种假设进行分析：</p>
+<ul>
+<li>独立事件模型（所有action都是随机的，waypoint也是随机的）<ul>
+<li>实际上是在1536个Q值更新中做随机选择。假设进行了40次action，至少有一个Q值未被更新的概率为((1536-1)/1536) ** 40 = 0.97。简单计算一下，如果要在95%的概率以上每个Q值至少更新一次，需要至少进行4600次训练， ((1536-1)/1536) ** 4600 = 0.04999</li>
+</ul>
+</li>
+<li>简单马尔可夫模型<ul>
+<li>在马尔可夫模型中，如果action到action的状态转移矩阵所有的值都为0.25，也就是action之后的action还是平均概率，那么和独立时间模型需要的训练次数是一样的。如果状态转移矩阵不是均衡的，那么应该以状态转移矩阵中最小的概率来计算。例如状态转移矩阵中最小的概率值为0.1，那么40次action后，至少有一个Q值未被更新的概率为（1 - 1/384 * 0.1） ** 40 = 0.989,如果在95%的概率上每个Q值更新一次，至少需要进行11500次训练。</li>
+</ul>
+</li>
+</ul>
 
 </div>
 </div>
